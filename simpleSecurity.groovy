@@ -25,9 +25,9 @@ definition(
 
 
 preferences {
-	section("Armed mode") {
-	    input("armedMode", "mode")
-	}
+        section("Armed mode") {
+            input("armedMode", "mode")
+        }
     section("Motion Sensors") {
         input("motionSensors", "capability.motionSensor", multiple: true)
     }
@@ -38,32 +38,32 @@ preferences {
         input("warningTimeout", "number", title: "Warning period in seconds")
     }
     section("Demo Switch") {
-    	input("demoSwitch", "capability.switch")
+        input("demoSwitch", "capability.switch")
         input("offMode", "mode")
     }
 }
 
 def installed() {
-	log.debug "Installed with settings: ${settings}"
+        log.debug "Installed with settings: ${settings}"
 
-	initialize()
+        initialize()
 }
 
 def updated() {
-	log.debug "Updated with settings: ${settings}"
+        log.debug "Updated with settings: ${settings}"
 
-	unsubscribe()
-	initialize()
+        unsubscribe()
+        initialize()
 }
 
 def initialize() {
-	subscribe location, "mode", onMode
+        subscribe location, "mode", onMode
     subscribe motionSensors, "motion", onMotion
     subscribe demoSwitch, "switch", onDemoSwitch
     if(state_isArmed()) {
-    	state_arm()
+        state_arm()
     } else {
-    	state_disarm()
+        state_disarm()
     }
 }
 
@@ -82,18 +82,18 @@ def onDemoSwitch(evt) {
 
 
 def onMode(evt) {
-	log.debug "onMode $evt.value"
-	if(evt.value == armedMode) {
-    	state_arm()
+        log.debug "onMode $evt.value"
+        if(evt.value == armedMode) {
+        state_arm()
     } else {
         state_disarm()
     }
-	react()
+        react()
 }
 
 def onMotion(evt) {
-	log.debug "onMotion $evt.value"
-	state_setIntruderDetected(evt.value == 'active' || state_intruderDetected()) // never turn off if system is armed
+        log.debug "onMotion $evt.value"
+        state_setIntruderDetected(evt.value == 'active' || state_intruderDetected()) // never turn off if system is armed
     react()
 }
 
@@ -101,48 +101,48 @@ def onMotion(evt) {
 /* State API */
 /*************/
 def state_arm() {
-	log.debug "System armed"
-	state_setIntruderDetected(false)
+        log.debug "System armed"
+        state_setIntruderDetected(false)
 }
 
 def state_disarm() {
-	log.debug "System disarmed"
-	state_setIntruderDetected(false)
+        log.debug "System disarmed"
+        state_setIntruderDetected(false)
 }
 
 def state_isArmed() {
-	location.currentMode == armedMode || demoSwitch.currentSwitch == "pressed"
+        location.currentMode == armedMode || demoSwitch.currentSwitch == "pressed"
 }
 
 
 def state_setIntruderDetected(status) {
-	log.debug "Intruder? $status"
+        log.debug "Intruder? $status"
     
     // new intruder detected
     if(status && !state.intruderDetected) {
-    	state.intruderDetectedAt = now()
+        state.intruderDetectedAt = now()
     }
     state.intruderDetected = status
     
 }
 
 def state_intruderDetected() {
-	state.intruderDetected
+        state.intruderDetected
 }
 
 def state_isWarning() {
-	now() - warningTimeout * 1000 < state.intruderDetectedAt
+        now() - warningTimeout * 1000 < state.intruderDetectedAt
 }
 
 def react() {
-	if(state_isArmed() && state_intruderDetected()) {
-    	if(state_isWarning()) {
-        	alarms.strobe()
- 			runIn(10, "react")
+        if(state_isArmed() && state_intruderDetected()) {
+        if(state_isWarning()) {
+                alarms.strobe()
+                        runIn(10, "react")
         } else {
-    	    alarms.both()
+            alarms.both()
         }
     } else {
-    	alarms.off()
+        alarms.off()
     }
 }
