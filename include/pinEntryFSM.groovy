@@ -11,12 +11,20 @@ def PinEntryFSM(String pin, ArrayList<String> buttonIds) {
   ]
 }
 
+/***********/
+/* Queries */
 /**********/
+def PinEntryFSM_isOpen(pinEntryFSM) {
+  stack_isEmpty(pinEntryFSM['pinStack'])
+}
+
+
+/***********/
 /* Events */
-/*********/
+/***********/
 def PinEntryFSM_reset(pinEntryFSM) {
   pinEntryFSM["pinStack"] = stack_init(pinEntryFSM["pin"])
-  return [null, pinEntryFSM]
+  return pinEntryFSM
 }
 
 def PinEntryFSM_pushButton(pinEntryFSM, buttonId) {
@@ -27,10 +35,5 @@ def PinEntryFSM_pushButton(pinEntryFSM, buttonId) {
   if(isValid) {
     pinEntryFSM['pinStack'] = stack_pop(stack)
   }
-
-  return [
-    [open: stack_isEmpty(pinEntryFSM['pinStack']),
-     isValid: isValid],
-    pinEntryFSM
-  ]
+  return pinEntryFSM
 }

@@ -17,7 +17,7 @@ clean:
 	rm -rf $(BUILDDIR)
 
 test: $(TESTBUILDDIR)/$(TESTOUTFILES)
-	groovy $(TESTBUILDDIR)/*.groovy
+	find $(TESTBUILDDIR) -iname *.groovy -exec groovy {} \;
 
 $(BUILDDIR):
 	mkdir -p $(BUILDDIR)

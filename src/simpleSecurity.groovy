@@ -58,14 +58,11 @@ def updated() {
 }
 
 def initialize() {
+  state.fsm = SimpleSecurityFSM(warningTimeout)
+  
   subscribe location, "mode", onMode
-  subscribe motionSensors, "motion", onMotion
+  subscribe motionSensors, "motion.active", onMotion
   subscribe demoSwitch, "switch", onDemoSwitch
-  if(state_isArmed()) {
-    state_arm()
-  } else {
-    state_disarm()
-  }
 }
 
 
@@ -75,76 +72,41 @@ def initialize() {
 def onDemoSwitch(evt) {
   log.debug "onDemoSwitch $evt.value"
   if(evt.value == "on") {
-    setLocationMode(mode)
+    state.fsm = SimpleSecurityFSM_arm(state.fsm)
+    log.trace "arm($state.fsm)"
   } else if (evt.value == "off") {
-    setLocationMode(offMode)
+    state.fsm = SimpleSecurityFSM_disarm(state.fsm)
+    log.trace "disarm($state.fsm)"
   }
+  react()
 }
-
 
 def onMode(evt) {
   log.debug "onMode $evt.value"
   if(evt.value == armedMode) {
-    state_arm()
+    state.fsm = SimpleSecurityFSM_arm(state.fsm)
+    log.trace "arm($state.fsm)"
   } else {
-    state_disarm()
+    state.fsm = SimpleSecurityFSM_disarm(state.fsm)
+    log.trace "disarm($state.fsm)"
   }
   react()
 }
 
 def onMotion(evt) {
-  log.debug "onMotion $evt.value"
-  // never forget intruder once we see one
-  state_setIntruderDetected(evt.value == 'active' || state_intruderDetected()) 
+  state.fsm = SimpleSecurityFSM_intrude(state.fsm, now())
   react()
 }
 
-/*************/
-/* State API */
-/*************/
-def state_arm() {
-  log.debug "System armed"
-  state_setIntruderDetected(false)
-}
-
-def state_disarm() {
-  log.debug "System disarmed"
-  state_setIntruderDetected(false)
-}
-
-def state_isArmed() {
-  location.currentMode == armedMode || demoSwitch.currentSwitch == "pressed"
-}
-
-
-def state_setIntruderDetected(status) {
-  log.debug "Intruder? $status"
-  
-  // new intruder detected
-  if(status && !state.intruderDetected) {
-    state.intruderDetectedAt = now()
-  }
-  state.intruderDetected = status
-}
-
-def state_intruderDetected() {
-  state.intruderDetected
-}
-
-def state_isWarning() {
-  now() - warningTimeout * 1000 < state.intruderDetectedAt
-}
-
 def react() {
-  if(state_isArmed() && state_intruderDetected()) {
-    if(state_isWarning()) {
-      alarms.strobe()
-      // reschedule react to figure out when the warning period is over
-      runIn(10, "react")
-    } else {
-      alarms.both()
-    }
+  if(SimpleSecurityFSM_isWarning(state.fsm, now())) {
+    alarms.strobe()
+    runIn(60, "react")
+  } else if (SimpleSecurityFSM_isAlarm(state.fsm, now())) {
+    alarms.both()
   } else {
     alarms.off()
   }
 }
+
+#include "simpleSecurityFSM.groovy"

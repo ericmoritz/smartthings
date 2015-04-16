@@ -34,12 +34,20 @@ def PinEntryFSM(String pin, ArrayList<String> buttonIds) {
   ]
 }
 
+/***********/
+/* Queries */
 /**********/
+def PinEntryFSM_isOpen(pinEntryFSM) {
+  stack_isEmpty(pinEntryFSM['pinStack'])
+}
+
+
+/***********/
 /* Events */
-/*********/
+/***********/
 def PinEntryFSM_reset(pinEntryFSM) {
   pinEntryFSM["pinStack"] = stack_init(pinEntryFSM["pin"])
-  return [null, pinEntryFSM]
+  return pinEntryFSM
 }
 
 def PinEntryFSM_pushButton(pinEntryFSM, buttonId) {
@@ -50,43 +58,51 @@ def PinEntryFSM_pushButton(pinEntryFSM, buttonId) {
   if(isValid) {
     pinEntryFSM['pinStack'] = stack_pop(stack)
   }
-
-  return [
-    [open: stack_isEmpty(pinEntryFSM['pinStack']),
-     isValid: isValid],
-    pinEntryFSM
-  ]
+  return pinEntryFSM
 }
 
 def state = PinEntryFSM("1234", ["a", "b", "c", "d"])
 
 // press the correct buttons
-(result, state) = PinEntryFSM_pushButton(state, "a")
-assert result == [open: false, isValid: true]
-(result, state) = PinEntryFSM_pushButton(state, "b")
-assert result == [open: false, isValid: true]
-(result, state) = PinEntryFSM_pushButton(state, "c")
-assert result == [open: false, isValid: true]
-(result, state) = PinEntryFSM_pushButton(state, "d")
-assert result == [open: true, isValid: true]
+state = PinEntryFSM_pushButton(state, "a")
+assert PinEntryFSM_isOpen(state) == false
+
+state = PinEntryFSM_pushButton(state, "b")
+assert PinEntryFSM_isOpen(state) == false
+
+state = PinEntryFSM_pushButton(state, "c")
+assert PinEntryFSM_isOpen(state) == false
+
+state = PinEntryFSM_pushButton(state, "d")
+assert PinEntryFSM_isOpen(state) == true
 
 // stays open until reset
-(result, state) = PinEntryFSM_pushButton(state, "d")
-assert result == [open: true, isValid: false]
+state = PinEntryFSM_pushButton(state, "d")
+assert PinEntryFSM_isOpen(state) == true
+
+
 
 // reset
-(_, state) = PinEntryFSM_reset(state)
+state = PinEntryFSM_reset(state)
 
-// invalid button sequence, then a valid sequence
-(result, state) = PinEntryFSM_pushButton(state, "b")
-assert result == [open: false, isValid: false]
-(result, state) = PinEntryFSM_pushButton(state, "c")
-assert result == [open: false, isValid: false]
-(result, state) = PinEntryFSM_pushButton(state, "a")
-assert result == [open: false, isValid: true]
-(result, state) = PinEntryFSM_pushButton(state, "b")
-assert result == [open: false, isValid: true]
-(result, state) = PinEntryFSM_pushButton(state, "c")
-assert result == [open: false, isValid: true]
-(result, state) = PinEntryFSM_pushButton(state, "d")
-assert result == [open: true, isValid: true]
+// press the incorrect buttons, and then press the correct pin
+state = PinEntryFSM_pushButton(state, "c")
+assert PinEntryFSM_isOpen(state) == false
+
+state = PinEntryFSM_pushButton(state, "d")
+assert PinEntryFSM_isOpen(state) == false
+
+state = PinEntryFSM_pushButton(state, "a")
+assert PinEntryFSM_isOpen(state) == false
+
+state = PinEntryFSM_pushButton(state, "a")
+assert PinEntryFSM_isOpen(state) == false
+
+state = PinEntryFSM_pushButton(state, "b")
+assert PinEntryFSM_isOpen(state) == false
+
+state = PinEntryFSM_pushButton(state, "c")
+assert PinEntryFSM_isOpen(state) == false
+
+state = PinEntryFSM_pushButton(state, "d")
+assert PinEntryFSM_isOpen(state) == true

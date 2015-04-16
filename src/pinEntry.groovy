@@ -3,21 +3,25 @@
  *
  *  Copyright 2015 Eric Moritz
  *
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License. You may obtain a copy of the License at:
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the
+ *  License. You may obtain a copy of the License at:
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
- *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
- *  for the specific language governing permissions and limitations under the License.
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an "AS
+ *  IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+ *  express or implied. See the License for the specific language
+ *  governing permissions and limitations under the License.
  *
  */
 definition(
     name: "Pin Entry",
     namespace: "",
     author: "Eric Moritz",
-    description: "Switch to a mode when pressing a combination of buttons",
+    description: "This smart app lets you treat switches as a PIN when each are switch on.",
+    
     category: "",
     iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
     iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png",
@@ -25,20 +29,29 @@ definition(
 
 
 preferences {
+        section("Mode") {
+          input "newMode", "mode", title: "Mode",
+                         description: "mode to switch to when triggered"
+        }
+
         section("Pin") {
-          input "pin", "password", description: "A string of 1-4 digits, ex: 11234"
+          input "pin", "password", title: "Pin", description: "A string of 1-4 digits, ex: 11234 that represent each switch"
         }
-	section("Button 1") {
-          input "button1", "capability.switch"
+
+	section("Switch 1") {
+          input "switch1", "capability.switch"
         }
-	section("Button 2") {
-          input "button2", "capability.switch"
+
+	section("Switch 2") {
+          input "switch2", "capability.switch"
         }
-	section("Button 3") {
-          input "button3", "capability.switch"
+
+	section("Switch 3") {
+          input "switch3", "capability.switch"
         }
-	section("Button 4") {
-          input "button4", "capability.switch"
+
+	section("Switch 4") {
+          input "switch4", "capability.switch"
 	}
 }
 
@@ -59,32 +72,31 @@ def initialize() {
   state.pinEntryFSM = PinEntryFSM(
     pin,
     [
-      button1.id.toString(),
-      button2.id.toString(),
-      button3.id.toString(),
-      button4.id.toString()
+      switch1.id,
+      switch2.id,
+      switch3.id,
+      switch4.id
     ]
   )
-  subscribe(button1, "switch.on", onButton)
-  subscribe(button2, "switch.on", onButton)
-  subscribe(button3, "switch.on", onButton)
-  subscribe(button4, "switch.on", onButton)
+  subscribe(switch1, "switch.on", onSwitch)
+  subscribe(switch2, "switch.on", onSwitch)
+  subscribe(switch3, "switch.on", onSwitch)
+  subscribe(switch4, "switch.on", onSwitch)
 }
 
 
 /******************/
 /* Event handlers */
 /******************/
-def onButton(evt) {
-  def x
-  x = PinEntryFSM_pushButton(
+def onSwitch(evt) {
+  state.pinEntryFSM = PinEntryFSM_pushButton(
     state.pinEntryFSM,
     evt.deviceId
   )
-  if(x[0]['open']) {
+  if(PinEntryFSM_isOpen(state.pinEntryFSM)) {
     log.debug "opened"
-    x = PinEntryFSM_reset(state.pinEntryFSM)
-    state.pinEntryFSM = x[1]
+    setLocationMode(newMode);
+    state.pinEntryFSM = PinEntryFSM_reset(state.pinEntryFSM)
   }
 }
 
