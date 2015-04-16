@@ -1,0 +1,17 @@
+# start: project.ttl
+@prefix doap: <http://usefulinc.com/ns/doap#> .
+@prefx foaf: <http://xmlns.com/foaf/0.1/> .
+
+<https://github.com/ericmoritz/smartthings>
+  a doap:Project ;
+  doap:name "Eric Moritz' SmartThings apps" ;
+  doap:homepage <https://github.com/ericmoritz/smartthings> ;
+  doap:description "Various SmartThings apps" ;
+  doap:license <http://www.apache.org/licenses/LICENSE-2.0> ;
+  doap:maintainer <http://eric.themoritzfamily.com/> .
+
+<http://eric.themoritzfamily.com/>
+  a foaf:Person ;
+  foaf:name "Eric Moritz" ;
+  foaf:homepage <http://eric.themoritzfamily.com/> .
+# end: project.ttl
